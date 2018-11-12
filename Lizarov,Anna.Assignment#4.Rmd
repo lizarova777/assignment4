@@ -1,0 +1,206 @@
+---
+title: "Lizarov, Anna. Assignment#4"
+author: "Anna Lizarov"
+date: "November 6, 2018"
+output: html_document
+---
+
+##Part I
+```{r}
+D1 <- read.csv("Assistments-confidence.csv", header=TRUE)
+(D1 <- D1[,-1])
+```
+
+## Create a correlation matrix of the relationships between the variables, including correlation coefficients for each pair of variables/features.
+```{r}
+library(corrplot)
+
+#Generate pairwise correlations
+COR <- cor(D1)
+
+corrplot(COR, order="AOE", method="circle", tl.pos="lt", type="upper",        
+tl.col="black", tl.cex=0.6, tl.srt=45, 
+        addCoef.col="black", addCoefasPercent = TRUE,
+        sig.level=0.50, insig = "blank")
+```
+
+## Create a new data frame with the mean_correct variables removed
+```{r}
+D2 <- D1[,-4]
+
+#The, scale and center your data for easier interpretation
+D2 <- scale(D2, center = TRUE)
+```
+
+## Now run the PCA on the new data frame
+```{r}
+pca <- prcomp(D2, scale = TRUE)
+```
+
+## Although princomp does not generate the eigenvalues directly for us, we can print a list of the standard deviation of the variance accounted for by each component.
+```{r}
+pca$sdev
+
+#To convert this into variance accounted for we can square it, these numbers are proportional to the eigenvalue
+
+pca$sdev^2
+
+#A summary of our pca will give us the proportion of variance accounted for by each component
+
+summary(pca)
+
+#We can look at this to get an idea of which components we should keep and which we should drop
+
+plot(pca, type = "lines")
+```
+
+# Think about which components you would drop and make a decision
+```{r}
+# Answer: PC5 and PC6 should be dropped. PCA6 should be dropped since it only maximizes only 8.93% of the variance. In other words, only 8.93% of the variance is accounted for by PCA6. PC5 should be omitted since it only maximizes 12.2% of the variance. As in, only 12.2% of the variance is accounted for by PC5. 
+```
+
+
+##Part II
+```{r}
+#Now, create a data frame of the transformed data from your pca.
+
+D3 <- as.data.frame(pca$x)
+
+#Attach the variable "mean_correct" from your original data frame to D3.
+
+D4 <- cbind(D3, as.data.frame(D1$mean_correct))
+
+#Now re-run your scatterplots and correlations between the transformed data and mean_correct. If you had dropped some components would you have lost important infomation about mean_correct?
+
+COR2 <- cor(D4)
+
+  
+corrplot(COR2, order="AOE", method="circle", tl.pos="lt", type="upper",        
+tl.col="black", tl.cex=0.6, tl.srt=45, 
+        addCoef.col="black", addCoefasPercent = TRUE,
+        sig.level=0.50, insig = "blank")
+```
+
+```{r}
+# Answer: One would not have lost important information about mean_correct if components with a small proportion of variance would have been dropped because these omitted components do not have any effect on the reconnstruction error as they do not account for much.  In other words, they do not really maximize the variance. 
+```
+
+## Now print out the eigenvectors (often called loadings) for the components you generated:
+```{r}
+pca$rotation
+
+#Examine the eigenvectors, notice that they are a little difficult to interpret. It is much easier to make sense of them if we make them proportional within each component
+```
+
+```{r}
+loadings <- abs(pca$rotation) #abs() will make all eigenvectors positive
+
+sweep(loadings, 2, colSums(loadings), "/") #sweep() computes each row as a proportion of the column. (There must be a way to do this with dplyr()?)
+```
+```{r}
+# Answer to creating this table with dplyr():
+library(dplyr)
+library(tidyr)
+loadings2 <- tbl_df(loadings)
+Variables <- c("prior_prob_count", "prior_percent_correct", "problems_attempted", "mean_hint", "mean_attempt", "mean_confidence ") 
+loadings3 <- cbind(Variables, loadings2)
+loadings4 <- loadings3 %>% mutate(PC1 = PC1/sum(PC1)) %>% mutate(PC2 = PC2/sum(PC2)) %>% mutate(PC3 = PC3/sum(PC3)) %>% mutate(PC4 = PC4/sum(PC4)) %>% mutate(PC5 = PC5/sum(PC5)) %>%  mutate(PC6 = PC6/sum(PC6)) %>% print
+ 
+```
+
+
+```{r}
+#Now examine your components and try to come up with substantive descriptions of what some might represent?
+
+# Answer:
+
+# When it comes to PC1, it accounts for the most variance in the three following variables: mean_hint, mean_attempt, and problems_attempted. As in, it contributes the most to these variance. It accounts for 30.22% of variance in the average number of hints a student asked for in the current session, 25.86% of variance in the average number of attempts a student took to answer a problem in the current session, and 21.74% of variance in the number of problems the student has attempted in the current session. 
+
+# PC2 contributes the most to prior_prob_count, prior_percent_correct, and problems_attempted. It accounts for 25.08% of variance in how many problems a student has answered in the system prior to this session, 44.68% of variance in the percentage of problems a student has answered correctly prior to this session, and 17.34% of variance in the number of problems the student has attempted in the current session. 
+
+# PC3 contributes the most to prior_prob_count, problems_attempted, and mean_confidence. It accounts for 22.10% of variance in how many problems a student has answered in the system prior to this session, 20.06% of variance in the number of problems the student has attempted in the current session, and 45.79% of variance in the average confidence each student has in their ability to answer the problems in the current session, which is substantial. 
+
+# PC4 contributes the most only to prior_prob_count and mean_confidence. It accounts for 31.52% of variance in how many problems a student has answered in the system prior to this session. and 22.61% of variance in he average confidence each student has in their ability to answer the problems in the current session.
+
+# PC5 contributes the most only to problems_attempted and mean_attempt. It accounts for 30.39% of variance in the number of problems the student has attempted in the current session, and 35.77% of variance in the average number of attempts a student took to answer a problem in the current session.
+
+# PC6 only contributes the most to mean_hint. As in, it accounts for 35.61% of variance in the average number of hints a student asked for in the current session. 
+
+```
+
+```{r}
+#You can generate a biplot to help you, though these can be a bit confusing. They plot the transformed data by the first two components. Therefore, the axes represent the direction of maximum variance. Then mapped onto this point cloud are the original directions of the variables, depicted as red arrows. It is supposed to provide a visualization of which variables "go together". Variables that possibly represent the same underlying construct point in the same direction.  
+
+biplot(pca)
+```
+
+```{r}
+#Calculate values for each student that represent these your composite variables and then create a new correlogram showing their relationship to mean_correct.
+D2a<- as.matrix(D2) %*% pca$rotation
+
+```
+
+```{r}
+#Correlogram
+D2b <- cbind(D2a, as.data.frame(D1$mean_correct))
+COR3 <- cor(D2b)
+
+corrplot(COR3, order="AOE", method="circle", tl.pos="lt", type="upper",        
+tl.col="black", tl.cex=0.6, tl.srt=45, 
+        addCoef.col="black", addCoefasPercent = TRUE,
+        sig.level=0.50, insig = "blank")
+```
+
+##PartIII
+```{r}
+DF <- read.csv("humor_data.csv", header=TRUE)
+(DF1 <- DF[,1:32])
+```
+```{r}
+DF2 <- scale(DF1, center = TRUE)
+# PCA
+pca2 <- prcomp(DF2, scale = TRUE)
+```
+
+```{r}
+# List of the standard deviation of the variance accounted for by each component.
+pca2$sdev
+
+#To convert this into variance accounted for we can square it, these numbers are proportional to the eigenvalue
+
+pca2$sdev^2
+
+#A summary of our pca will give us the proportion of variance accounted for by each component
+
+summary(pca2)
+
+
+plot(pca2, type = "lines")
+```
+
+
+
+```{r}
+biplot(pca2, expand = 1.1)
+```
+
+```{r}
+# Answer: The biplot displays a pattern that greatly resembles the four scale scores of the HSQ. First, it shows that the variables go in four directions. Second, the pattern of variables that "go together" is similar as to how the variables are grouped into four scale scores of the HSQ, which are affiliative, self-enhancing, aggressive, and self-defeating. In other words, they represent the same construct. However, there are some exceptions such as Q16. Each of the groups points towards a particular direction.  
+```
+
+```{r}
+loadings5<- abs(pca2$rotation)
+loadings6 <- sweep(loadings5, 2, colSums(loadings5), "/")
+```
+
+```{r}
+DF2a <- as.matrix(DF2) %*% pca2$rotation
+COR4 <- cor(DF2a)
+corrplot(COR4, order="AOE", method="circle", tl.pos="lt", type="upper",        
+tl.col="black", tl.cex=0.6, tl.srt=45, 
+        addCoef.col="black", addCoefasPercent = TRUE,
+        sig.level=0.50, insig = "blank")
+```
+
+
+
