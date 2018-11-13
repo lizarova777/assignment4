@@ -82,7 +82,7 @@ tl.col="black", tl.cex=0.6, tl.srt=45,
 ```
 
 ```{r}
-# Answer: One would not have lost important information about mean_correct if components with a small proportion of variance would have been dropped because these omitted components do not have any effect on the reconnstruction error as they do not account for much.  In other words, they do not really maximize the variance. 
+# Answer: One might lose important information about mean_correct if components with a small proportion of variance would have been dropped because these omitted components still contribute some information.  
 ```
 
 ## Now print out the eigenvectors (often called loadings) for the components you generated:
