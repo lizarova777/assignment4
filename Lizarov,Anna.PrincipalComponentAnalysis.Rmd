@@ -5,7 +5,8 @@ date: "November 6, 2018"
 output: html_document
 ---
 
-##Part I
+ #Part I
+## Start by uploading the data
 ```{r}
 D1 <- read.csv("Assistments-confidence.csv", header=TRUE)
 (D1 <- D1[,-1])
@@ -60,7 +61,7 @@ plot(pca, type = "lines")
 ```
 
 
-##Part II
+# Part II
 ```{r}
 #Now, create a data frame of the transformed data from your pca.
 
@@ -105,6 +106,7 @@ loadings2 <- tbl_df(loadings)
 Variables <- c("prior_prob_count", "prior_percent_correct", "problems_attempted", "mean_hint", "mean_attempt", "mean_confidence ") 
 loadings3 <- cbind(Variables, loadings2)
 loadings4 <- loadings3 %>% mutate(PC1 = PC1/sum(PC1)) %>% mutate(PC2 = PC2/sum(PC2)) %>% mutate(PC3 = PC3/sum(PC3)) %>% mutate(PC4 = PC4/sum(PC4)) %>% mutate(PC5 = PC5/sum(PC5)) %>%  mutate(PC6 = PC6/sum(PC6)) %>% print
+# or D5 <- mutate_all(as.data.frame(loadings), funs((.)/sum(.)))
  
 ```
 
@@ -138,6 +140,10 @@ biplot(pca)
 #Calculate values for each student that represent these your composite variables and then create a new correlogram showing their relationship to mean_correct.
 D2a<- as.matrix(D2) %*% pca$rotation
 
+# composite1 = var1 *eigenvector1 + var2*eigenvector2
+# You essentially want to weigh the values corresponding to what you find in D5. This can be done manually like so:
+#D2 <- as.data.frame(D2)
+#D2$aggressiveness <- D2$prior_prob_count*0.12423113 + D2$prior_percent_correct*0.08035956 + D2$problems_attempted*0.21744737 + D2$mean_hint*0.30223780 + D2$mean_attempt*0.25863458 + D2$mean_confidence*0.01708956
 ```
 
 ```{r}
@@ -151,7 +157,8 @@ tl.col="black", tl.cex=0.6, tl.srt=45,
         sig.level=0.50, insig = "blank")
 ```
 
-##PartIII
+# Part III
+## Also in this repository is a data set and codebook from Rod Martin, Patricia Puhlik-Doris, Gwen Larsen, Jeanette Gray, Kelly Weir at the University of Western Ontario about people's sense of humor. Can you perform a PCA on this data?
 ```{r}
 DF <- read.csv("humor_data.csv", header=TRUE)
 (DF1 <- DF[,1:32])
